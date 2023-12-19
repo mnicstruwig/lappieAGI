@@ -2,8 +2,8 @@ from lappie.llm import next_step
 
 from lappie.models import Action, World
 from lappie.display import print_world
+from lappie import tools
 from lappie.tree import add_subquestion, answer_question, delete_subquestion
-
 
 
 def main_loop(query: str):
@@ -25,6 +25,7 @@ def main_loop(query: str):
             world: World = answer_question(world, action.target_question_id)
         if action.action == Action.FINAL_ANSWER:
             world: World = answer_question(world, action.target_question_id)
+            print_world(world)
             break
         if action.action == Action.DELETE:
             world: World = delete_subquestion(world, action.target_question_id)

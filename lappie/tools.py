@@ -7,6 +7,8 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.schema import Document
 from langchain.vectorstores import FAISS, VectorStore
 
+from lappie.models import Tool
+
 
 # Voodoo magic
 def use_custom_docstring(docstring):
@@ -15,38 +17,22 @@ def use_custom_docstring(docstring):
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs).results
         wrapper.__doc__ = docstring
-        wrapper.__annotations__ = func.__annotations__
         return wrapper
     return decorator
 
-def _get_description(command_info_dict):
-    outputs_str = "\n"
-    for name, fieldinfo in command_info_dict['output'].model_fields.items():
-        outputs_str += name + " - " + fieldinfo.description + "\n" #+ f"when provider one of [{fieldinfo.title}]\n"
-
-    description = command_info_dict['callable'].__doc__.split("\n")[0]
-    description += "\nOutputs:\n" + outputs_str
-    return description
 
 def openbb_endpoint_to_magentic(endpoint_route):
     command_info_dict = obb.coverage.command_schemas()[endpoint_route]
     return get_magentic_compatible_openbb_tool(command_info_dict)
 
-def copy_func(f, name=None):
-    new_func = types.FunctionType(
-        f.__code__, f.__globals__, name or f.__name__, f.__defaults__, f.__closure__
-    )
-    new_func.__annotations__ = f.__annotations__
-    new_func.__doc__ = "blah di blah"
-    return new_func
 
 def get_magentic_compatible_openbb_tool(command_info_dict: dict) -> Callable:
     func = command_info_dict['callable']
-    wrapped_func = use_custom_docstring("Blah di blah")(func)
+    wrapped_func = use_custom_docstring(func.__doc__.split("\n")[0])(func)
     return wrapped_func
 
 
-def get_openbb_tool_info(function_name: str, command_info_dict: dict) -> dict:
+def get_openbb_tool(function_name: str, command_info_dict: dict) -> Tool:
     input_model = command_info_dict['input']
     function = command_info_dict['callable']
 
@@ -57,27 +43,46 @@ def get_openbb_tool_info(function_name: str, command_info_dict: dict) -> dict:
     description = function.__doc__.split("\n")[0]
     description += "\nOutputs:\n" + outputs_str
 
-    return {
-        "name": function_name,
-        "description": description,
-        "input_model": input_model
-    }
+    return Tool(
+        name=function_name,
+        function=function,
+        description=description,
+        input_model=input_model
+    )
 
 
-def get_all_openbb_tools_info() -> list[dict]:
-    openbb_tools_info = []
+def get_all_openbb_tools() -> list[Tool]:
+    openbb_tools = []
     for endpoint, info_dict in obb.coverage.command_schemas().items():
-        tool_info = get_openbb_tool_info(function_name=endpoint, command_info_dict=info_dict)
-        openbb_tools_info.append(tool_info)
+        tool = get_openbb_tool(function_name=endpoint, command_info_dict=info_dict)
+        openbb_tools.append(tool)
+    return openbb_tools
 
-    return openbb_tools_info
 
-
-def create_tool_index(tools: list[dict]) -> VectorStore:
+def create_tool_index(tools: list[Tool]) -> VectorStore:
     docs = [
-        Document(page_content=t['description'], metadata={'index': i})
+        Document(page_content=t.description, metadata={'index': i})
         for i, t in enumerate(tools)
     ]
 
     vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
     return vector_store
+
+
+def search_tool_index(vector_index: VectorStore, tools: list[Tool], query: str) -> list[dict]:
+    retriever = vector_index.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={"score_threshold": 0.65},
+    )
+
+    docs = retriever.get_relevant_documents(query)
+    if len(docs) < 3:
+        retriever = vector_index.as_retriever(search_kwargs={"k": 3})
+        docs = retriever.get_relevant_documents(query)
+
+    tools = [tools[d.metadata["index"]] for d in docs]
+
+    return [
+        {"name": t.name, "description": t.description}
+        for t in tools
+    ]

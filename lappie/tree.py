@@ -1,6 +1,11 @@
 from typing import Callable, Union, Optional
+
+from lappie.tools import create_tool_index, get_all_openbb_tools
 from .models import NewSubQuestion, World, SubQuestion
 from . import llm
+
+tools = get_all_openbb_tools()
+tool_index = create_tool_index(tools)
 
 def find_subquestion(obj: Union[World, SubQuestion], question_id: str) -> Optional[Union[World, SubQuestion]]:
     if str(obj.id) == str(question_id):
@@ -24,6 +29,10 @@ def answer_question(world: World, question_id: str) -> World:
     world = world.model_copy()
     target = find_subquestion(world, question_id)
     if target:
+        # Fetch tools
+        print("fetching tools...")
+        fetched_tools = llm.search_tools(world_state=world.model_dump_json(), question_id=question_id, tool_index=tool_index, tools=tools)
+        print("Fetched tools")
         answer_response = llm.answer_question(world_state=world.model_dump_json(), question_id=question_id)
         target.answer = answer_response.answer
     return world

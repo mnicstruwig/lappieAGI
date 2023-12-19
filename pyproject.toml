@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "lappie"
+version = "0.0.0"
+description = "A semi-autonomous \"mini\" AGI built as part of a hackathon."
+authors = ["Michael Struwig <mnicstruwig@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+magentic = "^0.13.0"
+pydantic = "^2.5.2"
+pytest = "^7.4.3"
+openbb-nightly = "^4.0.1.dev202312180010"
+faiss-cpu = "^1.7.4"
+langchain = "^0.0.350"
+rich = "^13.7.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

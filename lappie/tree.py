@@ -25,8 +25,14 @@ def answer_question(world: World, question_id: str) -> World:
     target = find_subquestion(world, question_id)
     if target:
         answer_response = llm.answer_question(world_state=world.model_dump_json(), question_id=question_id)
-        breakpoint()
         target.answer = answer_response.answer
+    return world
+
+def delete_subquestion(world: World, question_id: str) -> World:
+    """Delete a subquestion from the world."""
+    world = world.model_copy()
+    subquestion = find_subquestion(world, question_id)
+    del(subquestion)
     return world
 
 

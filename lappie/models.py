@@ -26,6 +26,7 @@ class Action(str, Enum):
     ANSWER = 'answer'
     DELETE = 'delete'
     UPDATE = 'update'
+    FINAL_ANSWER = 'final_answer'
     STOP = 'stop'
 
 

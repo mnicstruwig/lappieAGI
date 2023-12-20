@@ -1,8 +1,7 @@
 from lappie import display
-from lappie.models import SubQuestion, World
+
 
 def test_display(mock_world):  # noqa
-
     expected_result = """\
 
     """

@@ -1,6 +1,6 @@
 from lappie.tree import find_subquestion, add_subquestion
-from lappie.models import World, SubQuestion
 from lappie.display import print_world
+
 
 def test_find_subquestion_second_level(mock_world):
     target_question_id = mock_world.subquestions[1].subquestions[1].id
@@ -28,6 +28,9 @@ def test_find_subquestion_top_level(mock_world):
 
     assert actual_result == expected_result
 
+
 def test_add_subquestion(mock_world):
-    new_world = add_subquestion(mock_world, mock_world.subquestions[0].id, "Test question")
+    new_world = add_subquestion(
+        mock_world, mock_world.subquestions[0].id, "Test question"
+    )
     print_world(new_world)

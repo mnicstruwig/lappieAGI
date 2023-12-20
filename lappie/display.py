@@ -1,6 +1,7 @@
 from typing import Union
 from .models import SubQuestion, World
 
+
 def display_subquestion(subquestion: Union[SubQuestion, World], prefix="  ") -> str:
     display_str = prefix + " ➡️  Question: " + str(subquestion.question) + "\n"
     display_str += prefix + f"    ({subquestion.id})\n"

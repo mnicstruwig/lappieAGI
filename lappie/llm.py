@@ -1,26 +1,35 @@
 """LLM and agentic components."""
-
-from functools import wraps
+from typing import Callable
 from langchain.vectorstores import VectorStore
-from openbb import obb
-from magentic import chatprompt, SystemMessage, UserMessage, prompt, prompt_chain
+from magentic import prompt, prompt_chain
 from magentic.chat_model.openai_chat_model import OpenaiChatModel
 
-from .prompts import NEW_SUBQUESTION_PROMPT, ANSWER_SUBQUESTION_PROMPT, NEXT_STEP_PROMPT, SEARCH_TOOLS_PROMPT
+
+from .prompts import (
+    NEW_SUBQUESTION_PROMPT,
+    ANSWER_SUBQUESTION_PROMPT,
+    SEARCH_TOOLS_PROMPT,
+    REACT_PROMPT,
+)
 from .models import ActionResponse, AnswerResponse, RetrievedTool, Tool
-from .tools import create_tool_index, openbb_endpoint_to_magentic, search_tool_index
+from .tools import openbb_endpoint_to_magentic, search_tool_index
 
 
-
-
-def search_tools(world_state: str, question_id: str, tool_index: VectorStore, tools: list[Tool]):
+def search_tools(
+    world_state: str, question_id: str, tool_index: VectorStore, tools: list[Tool]
+):
+    """Retrieve magentic-compatible tools from a tool index."""
 
     def query_tool_index(query: str) -> list[dict]:
-        return search_tool_index(
-            vector_index=tool_index,
-            tools=tools,
-            query=query
+        fetched_tools = search_tool_index(
+            vector_index=tool_index, tools=tools, query=query
         )
+
+        # Save on tokens by only responding with the name and first line of the description
+        # for each retreived tool.
+        for tool in fetched_tools:
+            tool["description"] = tool["description"].split("\n")[0]
+        return fetched_tools
 
     @prompt_chain(
         SEARCH_TOOLS_PROMPT,
@@ -30,21 +39,41 @@ def search_tools(world_state: str, question_id: str, tool_index: VectorStore, to
     def _search_tools(world_state: str, question_id: str) -> list[RetrievedTool]:
         ...
 
-    retrieved_tools = _search_tools(world_state=world_state, question_id=question_id)
-    breakpoint()
-    return retrieved_tools
+    retrieved_tool_names = _search_tools(
+        world_state=world_state, question_id=question_id
+    )
+    tool_names = [t.name for t in retrieved_tool_names]
+    magentic_compatible_tools = [
+        openbb_endpoint_to_magentic(name) for name in tool_names
+    ]
+    return magentic_compatible_tools
 
-
-    # Decide if tools are sufficient
-
-    # If not, search again
 
 @prompt(
-    NEXT_STEP_PROMPT,
-    model=OpenaiChatModel(model="gpt-4"),
+    REACT_PROMPT,  # NEXT_STEP_PROMPT,
+    model=OpenaiChatModel(model="gpt-4-1106-preview", max_tokens=512),
+    stop=["Observation:"],
 )
-def next_step(world_state: str) -> ActionResponse:
+def next_step(
+    world_state: str, action_schema: str = str(ActionResponse.model_json_schema())
+) -> str:
+    """This is a faux React agent, since we don't currently keep state between runs!"""
     ...
+
+
+def answer_question_with_functions(
+    world_state: str, question_id: str, functions: list[Callable] | None
+) -> AnswerResponse:
+    @prompt_chain(
+        ANSWER_SUBQUESTION_PROMPT,
+        functions=functions,
+        model=OpenaiChatModel(model="gpt-4-1106-preview"),
+    )
+    def _answer_question(world_state: str, question_id: str) -> AnswerResponse:
+        ...
+
+    return _answer_question(world_state=world_state, question_id=question_id)
+
 
 @prompt_chain(
     ANSWER_SUBQUESTION_PROMPT,
@@ -54,6 +83,7 @@ def next_step(world_state: str) -> ActionResponse:
 def answer_question(world_state: str, question_id: str) -> AnswerResponse:
     """Use an agent to answer a question with `question_id` in `world`."""
     ...
+
 
 @prompt_chain(
     NEW_SUBQUESTION_PROMPT,

@@ -1,4 +1,3 @@
-import inspect
 
 from typing import Callable, Annotated
 from openbb import obb

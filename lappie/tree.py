@@ -4,7 +4,6 @@ from typing import Union, Optional
 from lappie.tools import (
     create_tool_index,
     get_all_openbb_tools,
-    openbb_endpoint_to_magentic,
 )
 from .models import ActionResponse, World, SubQuestion
 from . import llm

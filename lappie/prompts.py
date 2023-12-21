@@ -65,7 +65,7 @@ The action should use the following format:
 
 ```
 
-Begin! YOU MUST STICK TO THE FORMAT.
+Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON!
 
 State: {world_state}
 Thought:
@@ -161,6 +161,7 @@ Answer the question with the following id: {question_id}
 * If you cannot answer a question, say so with your answer.
 
 Remember to use the tools provided to you to answer the question, and STICK TO THE INPUT SCHEMA FOR THE TOOLS.
+Remember to specify `kwargs={{}}` if you do not want to use it!
 
 Make multiple queries with different inputs (perhaps by fetching more or less
 data) if your initial attempt at calling the tool doesn't return the information

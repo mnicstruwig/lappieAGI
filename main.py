@@ -34,4 +34,4 @@ def main_loop(query: str):
         print(action)
 
 
-main_loop("Look up the peers of AMZN? What is their stock price?")
+main_loop("Who has the highest stock price? AMZN or TSLA? Or maybe it's MSFT?")

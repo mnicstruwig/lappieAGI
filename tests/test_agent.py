@@ -186,9 +186,9 @@ def test_react_agent():
         """Multiply together two numbers"""
         return a * b
 
-    react_agent = agent.make_react_agent(
-        prompt="Add together {first} and {second}, then multiply by 10, then multiple by 10 again.",
+    result = agent.react_agent(
+        query="Add together 3 and 5, then multiply by 10, then multiply by 10 again. Give only the final answer, and nothing else.",
         functions=[add, multiply],
     )
 
-    result = react_agent(first=2, second=3)
+    assert result == "800"

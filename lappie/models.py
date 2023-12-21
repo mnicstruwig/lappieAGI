@@ -44,6 +44,11 @@ class ActionResponse(BaseModel):
     target_question_id: str = Field(
         description="The question ID to target for the specific action."
     )
+    guidance: str | None = Field(
+        description="Motivation for performing the action. Helpful for downstream assistants who will perform the action.",
+        examples=["The subquestion is too vague and needs to be refined."],
+        default=None,
+    )
 
 
 class AnswerResponse(BaseModel):

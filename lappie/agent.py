@@ -122,11 +122,7 @@ def _prepare_tools(functions: list[Callable] | None) -> dict:
     return tools
 
 
-def react_agent(
-        query: str,
-        functions = None
-):
-
+def react_agent(query: str, functions=None):
     messages = [SystemMessage(BASE_REACT_PROMPT), UserMessage("{query}")]
     stop = ["Observation:"]
     tools = _prepare_tools(functions)
@@ -146,22 +142,20 @@ def react_agent(
         input_object = tools[action]["args_schema"].parse_raw(
             action_input  # Validate the input schema
         )
-        function_call_result = tools[action]["callable"](
-            **input_object.model_dump()
-        )
+        function_call_result = tools[action]["callable"](**input_object.model_dump())
 
         # Append the observation / result...
-        messages.append(AssistantMessage(result.replace("{", "{{").replace("}", "}}")))  # Sanitize to prevent template confusion
+        messages.append(
+            AssistantMessage(result.replace("{", "{{").replace("}", "}}"))
+        )  # Sanitize to prevent template confusion
         messages.append(UserMessage(f"Observation: {str(function_call_result)}"))
 
         # Continue
         chain = chatprompt(*messages, stop=stop)(take_step)
         result = chain(query, tools_and_descriptions=tools_and_descriptions)
 
-
     final_answer = result.split("Final Answer: ")[-1]
     return final_answer
-
 
 
 def make_react_agent(

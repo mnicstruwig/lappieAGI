@@ -17,7 +17,7 @@ from .tools import openbb_endpoint_to_magentic, search_tool_index
 
 def search_tools(
     world_state: str, question_id: str, tool_index: VectorStore, tools: list[Tool]
-):
+) -> list[Callable]:
     """Retrieve magentic-compatible tools from a tool index."""
 
     def query_tool_index(query: str) -> list[dict]:
@@ -50,7 +50,7 @@ def search_tools(
 
 
 @prompt(
-    REACT_PROMPT,  # NEXT_STEP_PROMPT,
+    REACT_PROMPT,
     model=OpenaiChatModel(model="gpt-4-1106-preview", max_tokens=512),
     stop=["Observation:"],
 )
@@ -61,7 +61,7 @@ def next_step(
     ...
 
 
-def answer_question_with_functions(
+def answer_question(
     world_state: str, question_id: str, functions: list[Callable] | None
 ) -> AnswerResponse:
     @prompt_chain(
@@ -76,19 +76,17 @@ def answer_question_with_functions(
 
 
 @prompt_chain(
-    ANSWER_SUBQUESTION_PROMPT,
-    functions=[openbb_endpoint_to_magentic(".equity.fundamental.overview")],
+    NEW_SUBQUESTION_PROMPT,
     model=OpenaiChatModel(model="gpt-4-1106-preview"),
 )
-def answer_question(world_state: str, question_id: str) -> AnswerResponse:
-    """Use an agent to answer a question with `question_id` in `world`."""
+def add_subquestion(
+    world_state: str, question_id: str, guidance: str | None = None
+) -> str:
+    """Use an agent to generate a new subquestion with parent subquestion id `parent_id` in `world`."""
     ...
 
 
-@prompt_chain(
-    NEW_SUBQUESTION_PROMPT,
-    model=OpenaiChatModel(model="gpt-4"),
-)
-def add_subquestion(world_state: str, question_id: str) -> str:
-    """Use an agent to generate a new subquestion with parent subquestion id `parent_id` in `world`."""
+@prompt_chain(NEW_SUBQUESTION_PROMPT, model=OpenaiChatModel(model="gpt-4-1106-preview"))
+def update_subquestion(world_state: str, question_id: str, guidance: str | None) -> str:
+    """Use an agent to update a subquestion with parent id `parent_id` in world."""
     ...

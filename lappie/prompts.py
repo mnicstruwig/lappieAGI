@@ -35,20 +35,7 @@ Begin!
 New input:
 """
 
-REACT_PROMPT = """\
-You are a world-class dispatcher assistant that sends tasks to capable agents using actions.
-
-Your goal is to answer the high-level question in the State as best you can.
-
-You can dispatch tasks to agents using the following actions:
-* `answer` -- Answer a subquestion (using tools)
-* `add` -- Add a new subquestion (only if necessary)
-* `delete` -- Delete a question
-* `update` -- Update a question (by refining a new subquestion or refining an existing answer.)
-* `final_answer` -- Answer the top-level query (only do this when you can answer the main question!)
-* `stop` -- Stop the process. Only do this after the top-level question has been answered.
-
-Use the following format:
+temp = """\
 
 State: The state of the current question and answer tree
 Thought: you should always think about what to do
@@ -56,19 +43,35 @@ Action: the action to dispatch to an agent to execute, should be one of ["answer
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
-Final Answer: the final answer to the original input question
+Action: the action to dispatch to the agent at this time is ["final_answer"]
+"""
+
+REACT_PROMPT = """\
+You are a world-class dispatcher assistant that sends tasks to capable agents using actions.
+
+Your goal is to answer the high-level question in the State as best you can.
+
+You can dispatch tasks to agents using the following actions:
+* `answer` -- Answer a subquestion (using tools). You can use this to re-answer subquestions that already have been given an answer.
+* `add` -- Add a new subquestion (only if necessary)
+* `delete` -- Delete a question
+* `update` -- Update a question (by refining a subquestion.) This will remove the existing answer.
+* `final_answer` -- Answer the top-level query (only do this when you can answer the main question!)
+* `stop` -- Stop the process. Only do this after the top-level question has been answered, and you are satisifed that the user's query has been fully answered.
+
+Use the following format:
 
 The action should use the following format:
 ```json
-
 {action_schema}
-
 ```
 
 Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON!
 
+Remember: you must make sure the main high-level question is answered FULLY
+before calling `stop`.
+
 State: {world_state}
-Thought:
 """
 
 SEARCH_TOOLS_PROMPT = """\
@@ -117,6 +120,7 @@ query (which is the top-level question) by generating a new subquestion for a
 parent subquestion.
 
 The parent question you must generate a subquestion for has the following id: {question_id}.
+You have been given the following guidance when performing your task: {guidance}
 
 As your response, you must provide only the subquestion as a single sentence.
 

@@ -1,4 +1,3 @@
-
 from typing import Callable, Annotated
 from openbb import obb
 from functools import wraps

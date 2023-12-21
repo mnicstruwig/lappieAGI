@@ -67,10 +67,10 @@ def answer_question(world: World, question_id: str) -> World:
                 tool_index=tool_index,
                 tools=tools,
             )
-            print("Fetched tools")
+            print("Fetched tools: ", [tool.__name__ for tool in fetched_tools])
 
-        print("Answering question...")
-        answer_response = llm.answer_question_with_functions(
+        print("Answering question: ", question_id)
+        answer_response = llm.answer_question(
             world_state=world.model_dump_json(),
             question_id=question_id,
             functions=fetched_tools,
@@ -87,7 +87,9 @@ def delete_subquestion(world: World, question_id: str) -> World:
     return world
 
 
-def add_subquestion(world: World, question_id: str) -> World:
+def add_subquestion(
+    world: World, question_id: str, guidance: str | None = None
+) -> World:
     """Add a new subquestion to the world using an agent.
 
     The parent question (that must receive a subquestion) is specified using `question_id`.
@@ -96,7 +98,7 @@ def add_subquestion(world: World, question_id: str) -> World:
     """
     world = world.model_copy()
     new_subquestion = llm.add_subquestion(
-        world_state=world.model_dump_json(), question_id=question_id
+        world_state=world.model_dump_json(), question_id=question_id, guidance=guidance
     )
 
     if new_subquestion:
@@ -105,4 +107,24 @@ def add_subquestion(world: World, question_id: str) -> World:
             parent.subquestions.append(SubQuestion(question=new_subquestion))
     else:
         raise ValueError("Target not found :(")
+    return world
+
+
+def update_question(world: World, question_id: str, guidance: str | None) -> World:
+    """Update a (sub)question using an agent.
+
+    The question to be answerd is specified using `question_id`.
+    """
+    world = world.model_copy()
+    target = find_subquestion(world, question_id)
+    if target:
+        updated_subquestion_text = llm.update_subquestion(
+            world_state=world.model_dump_json(),
+            question_id=question_id,
+            guidance=guidance,
+        )
+        target.question = updated_subquestion_text
+        target.answer = None
+    else:
+        raise ValueError("Target not found")
     return world

@@ -1,37 +1,43 @@
+from lappie.util import display_intro
+
+display_intro()
+
+from lappie.display import display_intro, render
 from lappie.models import Action, World
-from lappie.display import print_world
 from lappie.tree import (
     add_subquestion,
     answer_question,
     delete_subquestion,
     get_next_step,
+    update_question,
 )
 
 
 def main_loop(query: str):
     world = World(question=query)
-
     action = get_next_step(world)
-    print_world(world)
-    print("=======")
-    print(action)
 
     while action.action != Action.STOP:
+        render(world, action)
+
         if action.action == Action.ADD:
-            world: World = add_subquestion(world, action.target_question_id)
+            world: World = add_subquestion(
+                world, action.target_question_id, action.guidance
+            )
         if action.action == Action.ANSWER:
             world: World = answer_question(world, action.target_question_id)
+        if action.action == Action.UPDATE:
+            world: World = update_question(
+                world, action.target_question_id, action.guidance
+            )
         if action.action == Action.FINAL_ANSWER:
             world: World = answer_question(world, action.target_question_id)
-            print_world(world)
+            render(world, action)
             break
         if action.action == Action.DELETE:
             world: World = delete_subquestion(world, action.target_question_id)
 
-        print_world(world)
         action = get_next_step(world)
-        print("=======")
-        print(action)
 
 
-main_loop("Who has the highest stock price? AMZN or TSLA? Or maybe it's MSFT?")
+main_loop("Which region earns the most amount of revenue for AMZN?")

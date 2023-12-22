@@ -26,19 +26,19 @@ def main_loop(query: str):
             world: World = add_subquestion(
                 world, action.target_question_id, action.guidance
             )
-        if action.action == Action.ANSWER:
+        elif action.action == Action.ANSWER:
             world: World = answer_question(world, action.target_question_id)
-        if action.action == Action.UPDATE:
+        elif action.action == Action.UPDATE:
             world: World = update_question(
                 world, action.target_question_id, action.guidance
             )
-        if action.action == Action.FINAL_ANSWER:
+        elif action.action == Action.FINAL_ANSWER:
             world: World = answer_question(world, action.target_question_id)
             render(world, action)
             break
-        if action.action == Action.DELETE:
+        elif action.action == Action.DELETE:
             world: World = delete_subquestion(world, action.target_question_id)
-        if action.action == Action.PROMPT_HUMAN:
+        elif action.action == Action.PROMPT_HUMAN:
             world: World = prompt_human(
                 world, action.target_question_id, action.guidance
             )
@@ -46,4 +46,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("Who are the peers of MSFT?")
+main_loop("Who are the peers of TSLA? Who has the largest market cap out of them?")

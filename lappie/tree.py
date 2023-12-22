@@ -38,8 +38,10 @@ def find_subquestion(
     for subquestion in obj.subquestions:
         if str(subquestion.id) == str(question_id):
             return subquestion
-        if subquestion.subquestions:
-            return find_subquestion(subquestion, question_id)
+        elif subquestion.subquestions:
+            result = find_subquestion(subquestion, question_id)
+            if result:
+                return result
 
 
 def get_next_step(world: World) -> ActionResponse:

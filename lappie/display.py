@@ -5,14 +5,15 @@ from rich.panel import Panel
 
 
 from lappie.tree import find_subquestion
-from .models import ActionResponse, Action
+from .models import ActionResponse, Action, World
 
 
 def build_id(id_):
     return Text(f"({id_})", style="italic dim")
 
 
-def build_question_panel(question):
+# TODO: Refactor (what a mess)
+def build_question_panel(question, current_action: ActionResponse | None = None):
     if question.answer:
         prefix = "🦋"
     else:
@@ -33,7 +34,15 @@ def build_question_panel(question):
     subquestion_title_text.append("\n")
     subquestion_title_text.append(build_id(question.id))
     border_style = "green" if question.answer else "white"
-    main_panel = Panel.fit(subquestion_title_text, border_style=border_style)
+
+    if current_action:
+        border_style = (
+            "bright_blue bold"
+            if str(question.id) == current_action.target_question_id
+            else border_style
+        )
+
+    main_panel = Panel(subquestion_title_text, border_style=border_style, expand=False)
     group = Group(main_panel)
     return group
 
@@ -58,15 +67,18 @@ def build_current_action(action: ActionResponse | None, target_question):
     return text
 
 
-def render(world, current_action=None):
-    group = Group(
-        build_current_action(
+def render(world: World, current_action: ActionResponse | None = None):
+    tree = build_tree(world, current_action=current_action)
+
+    if current_action:
+        display_current_action = build_current_action(
             current_action,
             target_question=find_subquestion(world, current_action.target_question_id),
-        ),
-        Text("-----"),
-        build_tree(world),
-    )
+        )
+    else:
+        display_current_action = Text("")
+
+    group = Group(display_current_action, Text("-----"), tree)
     console = Console()
     console.clear()
     console.print(group)
@@ -80,14 +92,14 @@ def build_tree(
 ):
     """Display the world model."""
 
+    group = build_question_panel(question, current_action)
+
     if not root:
-        group = build_question_panel(question)
         root = Tree(group)
     else:
-        group = build_question_panel(question)
         root = root.add(group)
 
     for subquestion in question.subquestions:
-        build_tree(subquestion, root=root)
+        build_tree(subquestion, root=root, current_action=current_action)
 
     return root

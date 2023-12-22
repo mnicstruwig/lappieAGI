@@ -25,10 +25,10 @@ def search_tools(
             vector_index=tool_index, tools=tools, query=query
         )
 
-        # Save on tokens by only responding with the name and first line of the description
+        # TODO: consider saving on tokens by only responding with the name and first line of the description
         # for each retreived tool.
         for tool in fetched_tools:
-            tool["description"] = tool["description"].split("\n")[0]
+            tool["description"] = tool["description"]
         return fetched_tools
 
     @prompt_chain(

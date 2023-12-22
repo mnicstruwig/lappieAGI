@@ -26,3 +26,23 @@ def test_find_subquestion_top_level(mock_world):
     actual_result = find_subquestion(mock_world, question_id=target_question_id)
 
     assert actual_result == expected_result
+
+
+def test_find_subquestion_after_nested(mock_world_2):
+    mock_world = mock_world_2
+    target_question_id = mock_world.subquestions[-1].id
+
+    expected_result = mock_world_2.subquestions[-1]
+    actual_result = find_subquestion(mock_world, question_id=target_question_id)
+
+    assert actual_result == expected_result
+
+
+def test_find_subquestion_doesnt_exist(mock_world_2):
+    mock_world = mock_world_2
+    target_question_id = "not in table"
+
+    expected_result = None
+    actual_result = find_subquestion(mock_world, question_id=target_question_id)
+
+    assert actual_result == expected_result

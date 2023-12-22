@@ -127,8 +127,6 @@ SEARCH_TOOLS_PROMPT = """\
 You are a world-class state-of-the-art search agent.
 You are excellent at your job.
 
-YOU MUST DO MULTIPLE FUNCTION CALLS! DO NOT RELY ON A SINGLE CALL ONLY.
-
 Given the following tree of question, subquestions and answers:
 
 {world_state}
@@ -142,19 +140,40 @@ Your search cycle works as follows:
 2. Read the description of tools
 3. Select tools that contain the relevant data to answer the user's query
 ... repeat as many times as necessary until you reach a maximum of 4 tools
-4. Return the list of tools using the output schema.
+4. Return the list of appropriate tools using the output schema.
 
 You can search for tools using the available tool, which uses your inputs to
 search a vector databse that relies on similarity search.
 
 These are the guidelines to consider when completing your task:
-* Don't use the stock ticker, symbol or company name in the query
-* Use keyword searches that find general purpose tools (eg. search for "peers" instead of "software company competitor tool")
+* The tools are general purpose -- keep this in mind while making your query
+* Don't use the stock ticker, symbol, company name in the query
+* Don't use the industry name in the query
+* Use keyword searches related to the specific data you need rather than the tool name. (eg. search for "peers" instead of "software company competitor tool")
 * Make multiple searches with different terms
+* Limit yourself to 2 searches.
 * You can return up to a maximum of 4 tools
+* It's usually a good idea to include the `.equity.fundamental.overview` tool.
 * Return 0 tools if tools are NOT required to answer the user's question given the information contained in the context.
 
-STICK TO THE OUPUT FORMAT.
+## Examples:
+Below are some bad examples (to avoid) and good examples (to follow):
+
+Bad: "technology company peer comparison"
+Good: "peers"
+Bad: "company competitor analysis"
+Good: "market peers"
+Bad: "compare technology companies market capitilization"
+Good: "market capitalization"
+Bad: "current market capitalization of companies"
+Good: "market capitilization"
+Bad: "financial analysis tool"  (not specific enough)
+Bad: "market capitilization lookup"
+Good: "market capitilization"
+Bad: "technology company peer lookup"
+Good: "market peers"
+
+REMEMBER TO STICK TO THE OUPUT FORMAT.
 """
 
 NEW_SUBQUESTION_PROMPT = """\
@@ -173,12 +192,14 @@ You have been given the following guidance when performing your task: {guidance}
 As your response, you must provide only the subquestion as a single sentence.
 
 Guidelines to help you with your task:
+* Break up larger questions into smaller subquestions.
+* Keep your subquestions small, singular and focused on a single entity at a time.
 * Subquestions should not simply restate their parent question.
 * Each subquestion should only be a single question with a single answer.
 * Prefer asking "What" subquestions
 * Assume a downstream question is answerable by an agent that can use tools to lookup the answer.
 * The subquestion MUST help answer the user's query.
-* Subquestions can be broken down into additional subquestions (and these can have subquestions, etc.) in future.
+* Subquestions can be broken down into additional subquestions (and these can have subquestions, etc.) at any time.
 * Assume each subquestion is answerable by an agent with the appropriate tool to look-up the required data.
 * Assume the subquestions have dependencies between each other, and that answers between dependent subquestions will be given as context to the answering agent.
 * Be as precise as possible.
@@ -265,7 +286,7 @@ You can:
 * `stop` -- Stop the process. Only do this after the top-level question has been answered.
 
 ## Guidelines
-* Try and answer subquestions as soon as possible
+* Try and strike a balance between answering subquestions and generating new ones.
 * Subquestions can be answered in any order.
 * You may generate new subquestions at any time.
 * Only add subquestions to break up a larger task into smaller tasks.
@@ -287,6 +308,9 @@ Should be broken up into:
 
 1. Who are the industry peers of TSLA?
 2. What is their market cap?
+   2.1 What is the market cap of peer 1?
+   2.2 What is the market cap of peer 2?
+   2.2 What is the market cap of peer 3?
 
 Only respond with a single action.
 """

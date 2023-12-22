@@ -10,6 +10,7 @@ from lappie.models import Tool
 
 BLACKLIST = ["screener", "search"]
 
+
 # Voodoo magic
 def make_magentic_compatible(docstring):
     def decorator(func):
@@ -48,7 +49,19 @@ def openbb_endpoint_to_magentic(endpoint_route):
 
 def get_magentic_compatible_openbb_tool(command_info_dict: dict) -> Callable:
     func = command_info_dict["callable"]
-    wrapped_func = make_magentic_compatible(func.__doc__.split("\n")[0])(func)
+    custom_docstring = func.__doc__.split("\n")[0]
+
+    # TODO: Currently duplicated in `get_openbb_tool`
+    outputs_str = "\n"
+    for name, fieldinfo in command_info_dict["output"].model_fields.items():
+        outputs_str += (
+            name + " - " + fieldinfo.description + ","
+        )  # + f"when provider one of [{fieldinfo.title}]\n"
+
+    description = func.__doc__.split("\n")[0]
+    description += "\nOutputs:\n" + outputs_str
+
+    wrapped_func = make_magentic_compatible(custom_docstring)(func)
     return wrapped_func
 
 
@@ -76,7 +89,6 @@ def get_openbb_tool(function_name: str, command_info_dict: dict) -> Tool:
 def get_all_openbb_tools() -> list[Tool]:
     openbb_tools = []
     for endpoint, info_dict in obb.coverage.command_schemas().items():
-
         # Black list certain tools
         if any(x in endpoint for x in BLACKLIST):
             continue

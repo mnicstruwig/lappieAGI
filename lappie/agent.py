@@ -168,7 +168,6 @@ def react_agent(query: str, functions=None):
             # Sanitize to prevent template confusion
             AssistantMessage(result.replace("{", "{{").replace("}", "}}"))
         )
-
         if "Final Answer:" in result:
             try:
                 return _react_parse_final_answer_response(result)
@@ -186,6 +185,7 @@ def react_agent(query: str, functions=None):
             try:
                 func, kwargs = _react_parse_action_and_inputs(result, tools)
                 try:
+                    print(f"Calling tool `{func.__name__}` with inputs `{kwargs}`")
                     function_call_result = func(**kwargs)
                     messages.append(
                         UserMessage(

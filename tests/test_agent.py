@@ -12,6 +12,7 @@ def test_create_pydantic_model_from_function():
 
     pass
 
+
 def test_get_input_variables():
     messages = [
         SystemMessage("Tell me a joke about {topic} in {language}."),

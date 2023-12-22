@@ -149,10 +149,9 @@ search a vector databse that relies on similarity search.
 
 These are the guidelines to consider when completing your task:
 * Don't use the stock ticker, symbol or company name in the query
-* Use keyword searches
+* Use keyword searches that find general purpose tools (eg. search for "peers" instead of "software company competitor tool")
 * Make multiple searches with different terms
 * You can return up to a maximum of 4 tools
-* Pay close attention to the data that available for each tool, and if it can answer the user's question
 * Return 0 tools if tools are NOT required to answer the user's question given the information contained in the context.
 
 STICK TO THE OUPUT FORMAT.

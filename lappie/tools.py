@@ -8,6 +8,7 @@ from langchain.vectorstores import FAISS, VectorStore
 
 from lappie.models import Tool
 
+BLACKLIST = ["screener", "search"]
 
 # Voodoo magic
 def make_magentic_compatible(docstring):
@@ -75,6 +76,11 @@ def get_openbb_tool(function_name: str, command_info_dict: dict) -> Tool:
 def get_all_openbb_tools() -> list[Tool]:
     openbb_tools = []
     for endpoint, info_dict in obb.coverage.command_schemas().items():
+
+        # Black list certain tools
+        if any(x in endpoint for x in BLACKLIST):
+            continue
+
         tool = get_openbb_tool(function_name=endpoint, command_info_dict=info_dict)
         openbb_tools.append(tool)
     return openbb_tools

@@ -8,74 +8,6 @@ from lappie.tree import find_subquestion
 from .models import ActionResponse, Action
 
 
-# def display_subquestion(subquestion: Union[SubQuestion, World], prefix="  ") -> str:
-#     display_str = prefix + " ➡️  Question: " + str(subquestion.question) + "\n"
-#     display_str += prefix + f"    ({subquestion.id})\n"
-
-#     if subquestion.answer is not None:
-#         emoji = "✅"
-#     else:
-#         emoji = "🕑"
-
-#     display_str += prefix + f"   {emoji} Answer: " + str(subquestion.answer) + "\n"
-
-#     for subquestion in subquestion.subquestions:
-#         display_str += display_subquestion(subquestion, prefix=prefix + "  ")
-
-#     return display_str
-#
-
-
-def display_intro():
-    out = """\
-               `           '
-                `         '
-                 :       :
-___              `       '              ___
-`Y8888ba.         :     :         .ad8888P'
-  88888888b.      `     '      .d88888888
-  8888888888b.     :   :     .d8888888888
-  88888P'  `?8b.   `   '   .d8P'  `?88888
-  88888       "8b   : :   d8"       88888
- j88888  .db.   ?b       dP   .db.  88888k
-   `888  8888    `b ( ) d'    8888  888'
-    888. ?88P                 ?88P .888
-    8888  ""        / \        ""  8888
-    8888b.   _,aaY' | | `Yaa,_   .d8888
-   j8888888888f"'   \ /    `"?888888888k
-      88888'.'      d b       `.`8888
-      88' .8       d' `b       8. `88
-      f  .88 db   d'| |`b   db 88.  l
-         888 `'   8 | | 8   `' 88b
-         888      8 | | 8      888
-        d888b   .d8 \_/ 8b.   d888b
-        88888888888     88888888888
-        8888888888       8888888888
-        f 8888888'       `8888888 l
-          `888888         888888'
-           8P  `Y         Y'  ?8
-           8                   8
-           f                   l
-
-    Welcome to LappieAGI!
-
-    Loading...
-    """
-    print(out)
-
-
-def build_answer(answer):
-    if answer:
-        style = "white"
-        prefix = "✅\n"
-        text = Text(prefix + answer, style=style)
-    else:
-        style = "dim"
-        prefix = "🕑 Pending"
-        text = Text(prefix, style=style)
-    return text
-
-
 def build_id(id_):
     return Text(f"({id_})", style="italic dim")
 
@@ -88,6 +20,10 @@ def build_question_panel(question):
 
     subquestion_title_text = Text(f"{prefix} {question.question}")
     subquestion_title_text.append("\n")
+
+    if question.human_feedback:
+        subquestion_title_text.append(Text(f"🧑 {question.human_feedback}"))
+
     subquestion_title_text.append("\n")
     subquestion_title_text.append(
         Text(str(question.answer), style="answer" if question.answer else "dim")
@@ -109,6 +45,10 @@ def build_current_action(action: ActionResponse | None, target_question):
         prefix = "➕"
     elif action.action == Action.ANSWER:
         prefix = "🔮"
+    elif action.action == Action.FINAL_ANSWER:
+        prefix = "🔮"
+    elif action.action == Action.PROMPT_HUMAN:
+        prefix = "🙋"
     else:
         prefix = "?"
 
@@ -141,10 +81,8 @@ def build_tree(
     """Display the world model."""
 
     if not root:
-        text = Text(f"✨ Question: {question.question}", style="bold")
-        text.append("\n")
-        text.append(build_answer(question.answer))
-        root = Tree(text)
+        group = build_question_panel(question)
+        root = Tree(group)
     else:
         group = build_question_panel(question)
         root = root.add(group)

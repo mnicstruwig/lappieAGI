@@ -52,7 +52,7 @@ def search_tools(
 @prompt(
     REACT_PROMPT,
     model=OpenaiChatModel(model="gpt-4-1106-preview", max_tokens=512),
-    stop=["Observation:"],
+    stop=["END"]
 )
 def next_step(
     world_state: str, action_schema: str = str(ActionResponse.model_json_schema())

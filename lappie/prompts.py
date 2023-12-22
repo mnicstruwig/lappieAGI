@@ -54,24 +54,29 @@ Your goal is to answer the high-level question in the State as best you can.
 You can dispatch tasks to agents using the following actions:
 * `answer` -- Answer a subquestion (using tools). You can use this to re-answer subquestions that already have been given an answer.
 * `add` -- Add a new subquestion (only if necessary)
-* `delete` -- Delete a question
+* `prompt_human` -- Ask the user for help with a clarifying question. Do not ask the user for data, but rather for more information that will assist you in answering a subquestion. Use the guidance field.
+* `delete` -- Delete a question.
 * `update` -- Update a question (by refining a subquestion.) This will remove the existing answer.
 * `final_answer` -- Answer the top-level query (only do this when you can answer the main question!)
 * `stop` -- Stop the process. Only do this after the top-level question has been answered, and you are satisifed that the user's query has been fully answered.
 
 Use the following format:
+State: <the world state>
+Action: <the action response>
+END
 
 The action should use the following format:
 ```json
 {action_schema}
 ```
 
-Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON!
+Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON, and only a single action!
 
 Remember: you must make sure the main high-level question is answered FULLY
 before calling `stop`.
 
 State: {world_state}
+Action:
 """
 
 SEARCH_TOOLS_PROMPT = """\
@@ -146,22 +151,24 @@ ONLY RESPOND WITH THE NEW SUBQUESTION AS A SINGLE SENTENCE.
 """
 
 ANSWER_SUBQUESTION_PROMPT = """\
+You are a world-class agent that is very helpful and always follows instructions.
+
+ONLY RESPOND WITH THE CORRECT OUTPUT FORMAT.
+
 Given the following tree of questions, subquestions and answers:
 
 {world_state}
 
-Answer the question with the following id: {question_id}
+Answer the question with the following id: {question_id} by using the correct output format schema.
 
 * Use the tree of questions and answers to help answer the question.
-* Give your answer in a bullet-point list.
 * Explain your reasoning, and make specific reference to the retrieved data.
 * Provide the relevant retrieved data as part of your answer.
 * Deliberately prefer information retreived from the tools and in the tree, rather than your internal knowledge.
 * Retrieve *only the data necessary* using tools to answer the question.
 * Do not retrieve more data than you need from the functions.
-* When answering the top-level question, only use the answers to other subquestions to formulate your final answer.
 * Give your actual answer in the `answer` field.
-* Put all commentary and explanatoins in the `comments` field.
+* Put all commentary and explanations in the `comments` field.
 * If you cannot answer a question, say so with your answer.
 
 Remember to use the tools provided to you to answer the question, and STICK TO THE INPUT SCHEMA FOR THE TOOLS.
@@ -171,16 +178,9 @@ Make multiple queries with different inputs (perhaps by fetching more or less
 data) if your initial attempt at calling the tool doesn't return the information
 you require.
 
-Important: when calling the function again, it is important to use different
-input arguments.
-
 If the tools responds with an error or empty response, attempt calling the tool again using
 different inputs. Don't give up after the first error.
 
-If necessary, make use of the subquestion tree and the answers to other questions in order to answer
-the subquestion with the specified ID.
-
-ONLY RESPOND WITH THE CORRECT OUTPUT FORMAT.
 
 ## Example output format
 {{
@@ -188,7 +188,18 @@ ONLY RESPOND WITH THE CORRECT OUTPUT FORMAT.
     "comments": "This was retrieved using the overview tool."
 }}
 
-FOR YOUR FINAL RESPONSE DO NOT RESPOND WITH A STRING. ONLY RESPOND USING THE OUTPUT FORMAT.
+If unable to answer the question:
+{{
+    "answer": "I was unable to answer the question, some suggestions <give suggestions to try re-answer the question>.",
+    "comments": "<Reasons for not being able to answer the question>"
+}}
+
+
+FOR YOUR FINAL RESPONSE YOU CAN NOT RESPOND WITH A STRING.
+
+ONLY RESPOND WITH THE CORRECT OUTPUT FORMAT, EVEN IF YOU CANNOT ANSWER.
+
+Go!
 """
 
 NEXT_STEP_PROMPT = """\
@@ -232,4 +243,5 @@ Should be broken up into:
 1. Who are the industry peers of TSLA?
 2. What is their market cap?
 
+Only respond with a single action.
 """

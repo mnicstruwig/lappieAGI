@@ -6,9 +6,10 @@ from pydantic import UUID4, BaseModel, Field
 
 class SubQuestion(BaseModel):
     id: UUID4 = Field(default_factory=uuid4)
-    question: str
-    answer: Optional[str] = None
-    subquestions: list["SubQuestion"] = []
+    question: str = Field(description="The question.")
+    answer: Optional[str] = Field(description="The answer to the question", default=None)
+    human_feedback: Optional[str] = Field(description="Feedback provided by the human to assist with answering the question.", default=None)
+    subquestions: list["SubQuestion"] = Field(description="A list of subquestions that, when answered, will assist with answering the current question.", default=[])
 
 
 class NewSubQuestion(BaseModel):
@@ -18,9 +19,10 @@ class NewSubQuestion(BaseModel):
 
 class World(BaseModel):
     id: UUID4 = Field(default_factory=uuid4)
-    question: str
-    answer: Optional[str] = None
-    subquestions: list[SubQuestion] = []
+    question: str = Field(description="The main question.")
+    answer: Optional[str] = Field(description="The answer to the main question", default=None)
+    human_feedback: Optional[str] = Field(description="Feedback provided by the human to assist with answering the question.", default=None)
+    subquestions: list["SubQuestion"] = Field(description="A list of subquestions that, when answered, will assist with answering the current question.", default=[])
 
 
 class Tool(BaseModel):
@@ -35,6 +37,7 @@ class Action(str, Enum):
     ANSWER = "answer"
     DELETE = "delete"
     UPDATE = "update"
+    PROMPT_HUMAN = "prompt_human"
     FINAL_ANSWER = "final_answer"
     STOP = "stop"
 

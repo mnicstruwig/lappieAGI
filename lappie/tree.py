@@ -78,6 +78,14 @@ def answer_question(world: World, question_id: str) -> World:
         target.answer = answer_response.answer
     return world
 
+def prompt_human(world: World, question_id: str, guidance: str) -> World:
+    question = find_subquestion(world, question_id)
+    if question:
+        print(f"Agent is asking for human feedback on the following question: {question.question}")
+        human_feedback = input(f"{guidance}\n")
+        question.human_feedback = human_feedback
+    return world
+
 
 def delete_subquestion(world: World, question_id: str) -> World:
     """Delete a subquestion from the world."""

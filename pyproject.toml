@@ -16,6 +16,7 @@ rich = "^13.7.0"
 tiktoken = "^0.5.2"
 magentic = { path = "../magentic/", develop = true }
 openbb = "4.1.0"
+lxml = "^4.9.4"
 
 
 [tool.poetry.group.dev.dependencies]

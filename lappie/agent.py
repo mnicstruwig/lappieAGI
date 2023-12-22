@@ -1,3 +1,5 @@
+import json
+import warnings
 from typing import Any, Callable
 from magentic import (
     FunctionCall,
@@ -9,9 +11,10 @@ from magentic import (
     AssistantMessage,
 )
 from magentic.chat_model.message import Message
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, ValidationError
 
-from lappie.prompts import BASE_REACT_PROMPT
+from lappie.prompts import ANSWER_SUBQUESTION_REACT_PROMPT, BASE_REACT_PROMPT
+from lappie.models import ActionResponse, AnswerResponse
 
 import inspect
 
@@ -24,6 +27,7 @@ def create_pydantic_model_from_function(fn):
         else (param.annotation, param.default)
         for param in sig.parameters.values()
     }
+    del fields['kwargs']
     return create_model(fn.__name__ + "Model", **fields)  # type: ignore
 
 
@@ -121,40 +125,82 @@ def _prepare_tools(functions: list[Callable] | None) -> dict:
     return tools
 
 
+def _react_parse_final_answer_response(result: str) -> AnswerResponse:
+    final_answer = result.split("Final Answer:")[-1].strip()
+    return AnswerResponse(**json.loads(final_answer))
+
+def _react_parse_action_response(result: str) -> (str, str):
+        action = result.split("Action: ")[-1].split("\n")[0]
+        action_input = result.split("Action Input: ")[-1].strip()
+        # Validate the input schema using the pydantic model
+        input_object = tools[action]["args_schema"].parse_raw(
+            action_input
+        )
+        return action, action_input
+
+def _react_parse_action_and_inputs(result, tools) -> tuple[Callable, dict]:
+    """Return the function and its input args"""
+    action = result.split("Action: ")[-1].split("\n")[0]
+    action_input = result.split("Action Input: ")[-1].strip()
+    input_object = tools[action]["args_schema"].parse_raw(
+        action_input
+    )
+
+    return tools[action]['callable'], input_object.model_dump()
+
+
 def react_agent(query: str, functions=None):
-    messages = [SystemMessage(BASE_REACT_PROMPT), UserMessage("{query}")]
+    messages = [SystemMessage(ANSWER_SUBQUESTION_REACT_PROMPT), UserMessage("{query}")]
     stop = ["Observation:"]
     tools = _prepare_tools(functions)
     tools_and_descriptions = _render_tools_and_descriptions(tools)
+    chat_model = OpenaiChatModel(model="gpt-4-1106-preview", temperature=0.1)
+    max_call_count = 10
+
 
     def take_step(query: str, tools_and_descriptions) -> str:
         ...
 
-    chain = chatprompt(*messages, stop=stop)(take_step)
+    chain = chatprompt(*messages, stop=stop, model=chat_model)(take_step)
     result = chain(query, tools_and_descriptions=tools_and_descriptions)
+    call_count = 1
 
-    while "Final Answer:" not in result:
-        breakpoint()
-        # Perform the action
-        action = result.split("Action: ")[-1].split("\n")[0]
-        action_input = result.split("Action Input: ")[-1].strip()
-        input_object = tools[action]["args_schema"].parse_raw(
-            action_input  # Validate the input schema
-        )
-        function_call_result = tools[action]["callable"](**input_object.model_dump())
-
-        # Append the observation / result...
+    while call_count < max_call_count:
+        # Always append the agent's request to us
         messages.append(
+            # Sanitize to prevent template confusion
             AssistantMessage(result.replace("{", "{{").replace("}", "}}"))
-        )  # Sanitize to prevent template confusion
-        messages.append(UserMessage(f"Observation: {str(function_call_result)}"))
+        )
 
-        # Continue
-        chain = chatprompt(*messages, stop=stop)(take_step)
+        if "Final Answer:" in result:
+            try:
+                return _react_parse_final_answer_response(result)
+            except json.JSONDecodeError as err:  # Give the agent a chance to fix it's bad output
+                breakpoint()
+                warnings.warn(f"Couldn't parse response: {err}. Trying again.")
+                messages.append(UserMessage(f"Observation: Incorrectly formatted response -- {str(err)}"))
+        else:
+            try:
+                func, kwargs = _react_parse_action_and_inputs(result, tools)
+                try:
+                    function_call_result = func(**kwargs)
+                    messages.append(UserMessage(f"Observation: {str(function_call_result).replace('{', '').replace('}', '')}"))
+                except Exception as err:  # TODO: Make this more specific
+                    breakpoint()
+                    warnings.warn(f"Couldn't execute action: {err}. Trying again.")
+                    messages.append(UserMessage(f"Observation: Couldn't execute action: {err}. Try again?"))
+            except (IndexError, KeyError, ValidationError) as err:
+                breakpoint()
+                warnings.warn(f"Couldn't parse action or its input: {err}. Trying again.")
+                messages.append(UserMessage(f"Observation: Couldn't parse action: {err}. Try again?"))
+
+        # Send back to agent
+        chain = chatprompt(*messages, stop=stop, model=chat_model)(take_step)
         result = chain(query, tools_and_descriptions=tools_and_descriptions)
+        # Loop again...
+        call_count += 1
 
-    final_answer = result.split("Final Answer: ")[-1]
-    return final_answer
+    return AnswerResponse(answer="Agent exceeded call count.")
 
 
 def make_react_agent(

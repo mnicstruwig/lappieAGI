@@ -1,5 +1,6 @@
 import json
 from typing import Union, Optional
+from lappie.agent import react_agent
 
 from lappie.tools import (
     create_tool_index,
@@ -70,16 +71,18 @@ def answer_question(world: World, question_id: str) -> World:
             print("Fetched tools: ", [tool.__name__ for tool in fetched_tools])
 
         print("Answering question: ", question_id)
-        answer_response = llm.answer_question(
-            world_state=world.model_dump_json(),
-            question_id=question_id,
-            functions=fetched_tools,
-        )
+
+        # This much match the format of the prompt
+        query = ""
+        query += f"Tree: {world.model_dump_json()}\n"
+        query += f"Question ID: {question_id}\n"
+
+        answer_response = react_agent(query=query, functions=fetched_tools)
         target.answer = answer_response.answer
     return world
 
 
-def prompt_human(world: World, question_id: str, guidance: str) -> World:
+def prompt_human(world: World, question_id: str, guidance: str | None) -> World:
     question = find_subquestion(world, question_id)
     if question:
         print(

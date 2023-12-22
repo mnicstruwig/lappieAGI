@@ -46,4 +46,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("Make an investment case for and against TSLA. Take a fundamental analysis approach. Give 5 pros and 5 cons in a list.")
+main_loop("Who are the peers of MSFT?")

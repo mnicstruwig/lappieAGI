@@ -46,4 +46,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("Mirror mirror on the wall, who's the best AGI of them all?")
+main_loop("Make an investment case for and against TSLA. Take a fundamental analysis approach. Give 5 pros and 5 cons in a list.")

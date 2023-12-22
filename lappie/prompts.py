@@ -164,8 +164,10 @@ Answer the question with the following id: {question_id} by using the correct ou
 * Use the tree of questions and answers to help answer the question.
 * Explain your reasoning, and make specific reference to the retrieved data.
 * Provide the relevant retrieved data as part of your answer.
+* Refer specifically to the values you retrieved as part of the actual answer.
 * Deliberately prefer information retreived from the tools and in the tree, rather than your internal knowledge.
 * Retrieve *only the data necessary* using tools to answer the question.
+* Be mindful of your context limit -- be wary of retrieving too much data in one go. Use the functions carefully to retrieve only the data you need.
 * Do not retrieve more data than you need from the functions.
 * Give your actual answer in the `answer` field.
 * Put all commentary and explanations in the `comments` field.

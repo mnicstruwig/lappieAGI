@@ -26,7 +26,7 @@ def build_question_panel(question):
 
     subquestion_title_text.append("\n")
     subquestion_title_text.append(
-        Text(f"🤖 str(question.answer)", style="white" if question.answer else "dim")
+        Text(f"🤖 {str(question.answer)}", style="white" if question.answer else "dim")
     )
     subquestion_title_text.append("\n")
     subquestion_title_text.append("---", style="dim")

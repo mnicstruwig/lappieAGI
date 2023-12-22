@@ -1,3 +1,4 @@
+# noqa: E402
 from lappie.util import display_intro
 
 display_intro()
@@ -10,7 +11,7 @@ from lappie.tree import (
     delete_subquestion,
     get_next_step,
     update_question,
-    prompt_human
+    prompt_human,
 )
 
 
@@ -38,9 +39,11 @@ def main_loop(query: str):
         if action.action == Action.DELETE:
             world: World = delete_subquestion(world, action.target_question_id)
         if action.action == Action.PROMPT_HUMAN:
-            world: World = prompt_human(world, action.target_question_id, action.guidance)
+            world: World = prompt_human(
+                world, action.target_question_id, action.guidance
+            )
 
         action = get_next_step(world)
 
 
-main_loop("What made the most money for AAPL in a certain year? Ask me for clarification.")
+main_loop("Mirror mirror on the wall, who's the best AGI of them all?")

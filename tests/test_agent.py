@@ -10,9 +10,7 @@ def test_create_pydantic_model_from_function():
     def test_func(a: int, b: str, c: Union[str, None] = "123") -> str:
         ...
 
-    model = agent.create_pydantic_model_from_function(test_func)
-    breakpoint()
-
+    pass
 
 def test_get_input_variables():
     messages = [

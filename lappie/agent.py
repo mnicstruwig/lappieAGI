@@ -9,12 +9,11 @@ from magentic import (
     AssistantMessage,
 )
 from magentic.chat_model.message import Message
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 from lappie.prompts import BASE_REACT_PROMPT
 
 import inspect
-from pydantic import BaseModel, create_model
 
 
 def create_pydantic_model_from_function(fn):

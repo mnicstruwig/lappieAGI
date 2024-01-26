@@ -1,4 +1,5 @@
 """LLM and agentic components."""
+import os
 from typing import Callable
 from langchain.vectorstores import VectorStore
 from magentic import prompt, prompt_chain
@@ -31,7 +32,7 @@ def search_tools(
     @prompt_chain(
         SEARCH_TOOLS_PROMPT,
         functions=[query_tool_index],
-        model=OpenaiChatModel(model="gpt-4-1106-preview"),
+        model=OpenaiChatModel(model="gpt-4-turbo-preview"),
     )
     def _search_tools(world_state: str, question_id: str) -> list[RetrievedTool]:
         ...
@@ -48,7 +49,7 @@ def search_tools(
 
 @prompt(
     NEXT_STEP_PROMPT,
-    model=OpenaiChatModel(model="gpt-4-1106-preview", max_tokens=512),
+    model=OpenaiChatModel("gpt-4", max_tokens=512),
     stop=["END"],
 )
 def next_step(

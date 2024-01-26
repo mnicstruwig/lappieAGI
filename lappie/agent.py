@@ -1,4 +1,5 @@
 import json
+import re
 import warnings
 from typing import Any, Callable
 from magentic import (
@@ -126,8 +127,17 @@ def _prepare_tools(functions: list[Callable] | None) -> dict:
 
 
 def _react_parse_final_answer_response(result: str) -> AnswerResponse:
-    final_answer = result.split("Final Answer:")[-1].strip()
-    return AnswerResponse(**json.loads(final_answer))
+    final_answer = result.split("Final Answer:")[-1]
+
+    # Clean-up errant new line characters in JSON See tests for a simplified
+    # example of what goes wrong when loading using json.loads
+    cleaned_final_answer = final_answer.strip()
+    cleaned_final_answer = re.sub(r"\{(\s+)", "{", cleaned_final_answer)
+    cleaned_final_answer = re.sub(r"(\s+)\}", "}", cleaned_final_answer)
+    cleaned_final_answer = re.sub(r",(\s+)", ",", cleaned_final_answer)
+    cleaned_final_answer = cleaned_final_answer.replace("\n", "\\n")
+
+    return AnswerResponse(**json.loads(cleaned_final_answer))
 
 
 def _react_parse_action_response(result: str) -> (str, str):
@@ -192,6 +202,7 @@ def react_agent(query: str, functions=None):
                             f"Observation: {str(function_call_result).replace('{', '').replace('}', '')}"
                         )
                     )
+                    print("Thinking...")
                 except Exception as err:  # TODO: Make this more specific
                     breakpoint()
                     warnings.warn(f"Couldn't execute action: {err}. Trying again.")

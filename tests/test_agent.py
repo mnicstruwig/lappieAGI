@@ -190,3 +190,20 @@ def test_react_agent():
     )
 
     assert result == "800"
+
+
+def test_parse_final_answer():
+    test_str = """{\n    "answer": "The key differences in the financial results and management comments in the most recent AAPL and TSLA transcripts are as follows:\n\nFor AAPL:\n- Revenue: $117.2 billion for Q1 FY2023, down 5% year-over-year.\n- iPhone revenue: $65.8 billion for the quarter, down 8% year-over-year.\n- Mac revenue: $7.7 billion, in line with expectations.\n- iPad revenue: $9.4 billion, up 30% year-over-year.\n- Wearables, Home and Accessories revenue: $13.5 billion, down 8% year-over-year.\n- Services revenue: $20.8 billion, an all-time record.\n- Net income: $30 billion.\n- Diluted earnings per share: $1.88.\n- Operating cash flow: $34 billion.\n- Active devices: Over 2 billion.\n- Paid subscriptions: More than 935 million.\n\nFor TSLA (not directly provided in the observation but can be inferred from the context):\n- The focus was on the launch of the Vision Pro, a new product set to release early next year.\n- The discussion included the importance of the Chinese market and the record iPhone revenue in India.\n- The commentary highlighted the all-time revenue record in Services and the growth in the installed base of active devices.\n- The financial performance of Mac and iPad was compared to the previous year, noting the supply disruptions and subsequent demand recapture.\n- The Wearables, Home and Accessories category was mentioned, with a focus on the Apple Watch and its expansion.\n- The Services segment was emphasized, with records set across App Store, advertising, AppleCare, iCloud, payment services, and video.\n\nThe contrast between the two transcripts shows that AAPL focused on detailed financial performance across various product categories and services, while TSLA\'s transcript (inferred from context) highlighted new product announcements and strategic market focuses.",\n    "comments": "The observation provides detailed information from the AAPL earnings call transcript but does not directly include the TSLA transcript. However, based on the context and the fact that TSLA was mentioned in relation to the Vision Pro launch and other strategic focuses, a contrast can be drawn between the two companies\' most recent earnings call transcripts. AAPL provided a comprehensive breakdown of financial results across different product lines and services, while TSLA\'s discussion (inferred) seemed to revolve around new product launches and market strategies."\n}"""
+#    test_str = """{\n "answer": "My\nanswer"}"""
+#
+#
+    test_str = """
+    {
+       "answer": "my\nanswer",
+       "comment": "my_comment"
+    }
+    """
+
+    actual_result = agent._react_parse_final_answer_response(test_str)
+    # TODO: Write test
+    assert False

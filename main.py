@@ -46,4 +46,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("What were said about the risks in the latest transcript from AMZN?")
+main_loop("Contrast the most recent AAPL transcript with the most recent TSLA transcript")

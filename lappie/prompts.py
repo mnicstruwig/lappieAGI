@@ -83,6 +83,8 @@ Final Answer:
 }}
 ```
 
+Your final answer must be in VALID JSON. Remember to escape characters if necessary!
+
 Begin! Remember to follow the process perfectly.
 
 New input:
@@ -106,6 +108,7 @@ You can dispatch tasks to agents using the following actions:
 
 ## Guidelines
 * Prioritize answering subquestions before generating new child subquestions (except for the case of the main question)
+* Remember that tools will be automatically retrieved when answering subquestions (so don't create steps trying to identify where to find information)
 * Don't let too many subquestions go unanswered.
 * Subquestions can be answered in any order.
 * You may generate new subquestions at any time.
@@ -146,6 +149,7 @@ Remember: you must make sure the main high-level question is answered FULLY
 before calling `stop`.
 
 Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON, and only a single action!
+Don't forget to include the target question id in your response!
 
 State: {world_state}
 Action:
@@ -202,7 +206,7 @@ Good: "market capitilization"
 Bad: "technology company peer lookup"
 Good: "market peers"
 
-REMEMBER TO STICK TO THE OUPUT FORMAT.
+REMEMBER TO STICK TO THE OUTPUT SCHEMA!
 """
 
 NEW_SUBQUESTION_PROMPT = """\

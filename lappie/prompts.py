@@ -90,20 +90,48 @@ New input:
 """
 
 
-REACT_PROMPT = """\
+NEXT_STEP_PROMPT = """\
 You are a world-class dispatcher assistant that sends tasks to capable agents using actions.
 
 Your goal is to answer the high-level question in the State as best you can.
 
 You can dispatch tasks to agents using the following actions:
 * `answer` -- Answer a subquestion (using tools). You can use this to re-answer subquestions that already have been given an answer.
-* `add` -- Add a new subquestion (only if necessary)
+* `add` -- Add a new subquestion, if necessary.
 * `prompt_human` -- Ask the user for help with a clarifying question. Do not ask the user for data, but rather for more information that will assist you in answering a subquestion. Use the guidance field.
 * `delete` -- Delete a question.
 * `update` -- Update a question (by refining a subquestion.) This will remove the existing answer.
 * `final_answer` -- Answer the top-level query (only do this when you can answer the main question!)
 * `stop` -- Stop the process. Only do this after the top-level question has been answered, and you are satisifed that the user's query has been fully answered.
 
+## Guidelines
+* Prioritize answering subquestions before generating new child subquestions (except for the case of the main question)
+* Don't let too many subquestions go unanswered.
+* Subquestions can be answered in any order.
+* You may generate new subquestions at any time.
+* Only add subquestions to break up a larger task into smaller tasks.
+* You must answer the top-level question before stopping.
+
+## Examples
+"What is the stock price of TSLA? What is the market cap of AMZN?"
+
+Should be decomposed into:
+
+1. What is the stock price of TSLA?
+2. What is the stock price of AMZN?
+
+"What are the peers of TSLA? What is their market cap?"
+
+Should be decomposed into:
+
+1. Who are the industry peers of TSLA?
+2. What is their market cap?
+   2.1 What is the market cap of peer 1?
+   2.2 What is the market cap of peer 2?
+   2.2 What is the market cap of peer 3?
+
+
+## Instructions
 Use the following format:
 State: <the world state>
 Action: <the action response>
@@ -114,10 +142,10 @@ The action should use the following format:
 {action_schema}
 ```
 
-Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON, and only a single action!
-
 Remember: you must make sure the main high-level question is answered FULLY
 before calling `stop`.
+
+Begin! YOU MUST STICK TO THE FORMAT. Make sure your respond with valid JSON, and only a single action!
 
 State: {world_state}
 Action:
@@ -146,6 +174,7 @@ You can search for tools using the available tool, which uses your inputs to
 search a vector databse that relies on similarity search.
 
 These are the guidelines to consider when completing your task:
+* Prefer tools that have up-to-date or live information if that is what the question requires.
 * The tools are general purpose -- keep this in mind while making your query
 * Don't use the stock ticker, symbol, company name in the query
 * Don't use the industry name in the query
@@ -192,8 +221,7 @@ You have been given the following guidance when performing your task: {guidance}
 As your response, you must provide only the subquestion as a single sentence.
 
 Guidelines to help you with your task:
-* Break up larger questions into smaller subquestions.
-* Keep your subquestions small, singular and focused on a single entity at a time.
+* Keep your subquestions small, singular and focused on a single stock at a time.
 * Subquestions should not simply restate their parent question.
 * Each subquestion should only be a single question with a single answer.
 * Prefer asking "What" subquestions
@@ -266,51 +294,4 @@ FOR YOUR FINAL RESPONSE YOU CAN NOT RESPOND WITH A STRING.
 ONLY RESPOND WITH THE CORRECT OUTPUT FORMAT, EVEN IF YOU CANNOT ANSWER.
 
 Go!
-"""
-
-NEXT_STEP_PROMPT = """\
-You are a state-of-the-art financial agent that is extremely good at project management.
-
-Given the following tree of questions, subquestions and answers:
-
-{world_state}
-
-Your goal is to decide the next step to take when attempting to answer a main user query.
-
-You can:
-* `answer` -- Answer a subquestion
-* `add` -- Add a subquestion (only if necessary)
-* `delete` -- Delete a question
-* `update` -- Update a question (by refining a new subquestion or refining an existing answer.)
-* `final_answer` -- Answer the top-level query (only do this when you can answer the main question!)
-* `stop` -- Stop the process. Only do this after the top-level question has been answered.
-
-## Guidelines
-* Try and strike a balance between answering subquestions and generating new ones.
-* Subquestions can be answered in any order.
-* You may generate new subquestions at any time.
-* Only add subquestions to break up a larger task into smaller tasks.
-* You must answer the top-level question before stopping.
-
-## Examples
-
-"What is the stock price of TSLA? What is the market cap of AMZN?"
-
-Should be broken up into:
-
-1. What is the stock price of TSLA?
-2. What is the stock price of AMZN?
-
-
-"What are the peers of TSLA? What is their market cap?"
-
-Should be broken up into:
-
-1. Who are the industry peers of TSLA?
-2. What is their market cap?
-   2.1 What is the market cap of peer 1?
-   2.2 What is the market cap of peer 2?
-   2.2 What is the market cap of peer 3?
-
-Only respond with a single action.
 """

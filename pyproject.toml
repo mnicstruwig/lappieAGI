@@ -9,13 +9,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 pydantic = "^2.5.2"
-pytest = "^7.4.3"
 faiss-cpu = "^1.7.4"
-langchain = "^0.0.350"
+langchain = "^0.1.1"
 rich = "^13.7.0"
 tiktoken = "^0.5.2"
-magentic = { path = "../magentic/", develop = true }
-openbb = "4.1.0"
+magentic = "0.14.0"
+#magentic = { path = "../magentic/", develop = true }
+openbb = "4.1.3"
 lxml = "^4.9.4"
 
 

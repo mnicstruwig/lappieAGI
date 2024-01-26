@@ -62,7 +62,7 @@ def answer_question(world: World, question_id: str) -> World:
     if target:
         # Fetch tools
         fetched_tools = []
-        if isinstance(target, SubQuestion):
+        if isinstance(target, (SubQuestion)):
             print("Fetching tools...")
             fetched_tools = llm.search_tools(
                 world_state=world.model_dump_json(),

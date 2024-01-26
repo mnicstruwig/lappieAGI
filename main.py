@@ -46,4 +46,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("Who are the peers of TSLA? Who has the largest market cap out of them?")
+main_loop("What were said about the risks in the latest transcript from AMZN?")

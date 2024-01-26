@@ -152,7 +152,6 @@ def test_make_chain_with_stop():
 
     result = chain(number="5")
     assert result == "one: first\ntwo: second\n"
-    breakpoint()
 
 
 def test_agent():

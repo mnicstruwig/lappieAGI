@@ -9,7 +9,7 @@ from .prompts import (
     NEW_SUBQUESTION_PROMPT,
     ANSWER_SUBQUESTION_PROMPT,
     SEARCH_TOOLS_PROMPT,
-    REACT_PROMPT,
+    NEXT_STEP_PROMPT,
 )
 from .models import ActionResponse, AnswerResponse, RetrievedTool, Tool
 from .tools import openbb_endpoint_to_magentic, search_tool_index
@@ -24,9 +24,6 @@ def search_tools(
         fetched_tools = search_tool_index(
             vector_index=tool_index, tools=tools, query=query
         )
-
-        # TODO: consider saving on tokens by only responding with the name and first line of the description
-        # for each retreived tool.
         for tool in fetched_tools:
             tool["description"] = tool["description"]
         return fetched_tools
@@ -50,7 +47,7 @@ def search_tools(
 
 
 @prompt(
-    REACT_PROMPT,
+    NEXT_STEP_PROMPT,
     model=OpenaiChatModel(model="gpt-4-1106-preview", max_tokens=512),
     stop=["END"],
 )
@@ -77,7 +74,7 @@ def answer_question(
 
 @prompt_chain(
     NEW_SUBQUESTION_PROMPT,
-    model=OpenaiChatModel(model="gpt-4-1106-preview"),
+    model=OpenaiChatModel(model="gpt-4"),
 )
 def add_subquestion(
     world_state: str, question_id: str, guidance: str | None = None

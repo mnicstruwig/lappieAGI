@@ -1,6 +1,7 @@
 """LLM and agentic components."""
 import os
 from typing import Callable
+import warnings
 from langchain.vectorstores import VectorStore
 from magentic import prompt, prompt_chain
 from magentic.chat_model.openai_chat_model import OpenaiChatModel
@@ -37,9 +38,18 @@ def search_tools(
     def _search_tools(world_state: str, question_id: str) -> list[RetrievedTool]:
         ...
 
-    retrieved_tool_names = _search_tools(
-        world_state=world_state, question_id=question_id
-    )
+    retrieved_tool_names = []
+    call_count = 1
+    while call_count < 3:
+        try:
+            retrieved_tool_names = _search_tools(
+                world_state=world_state, question_id=question_id
+            )
+            call_count += 1
+        except ValueError as err:  # Happens when model returns string instead of output schema
+            warnings.warn(f"{err}\nTrying again.")
+            continue
+
     tool_names = [t.name for t in retrieved_tool_names]
     magentic_compatible_tools = [
         openbb_endpoint_to_magentic(name) for name in tool_names

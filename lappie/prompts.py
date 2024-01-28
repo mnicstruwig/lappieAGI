@@ -45,6 +45,7 @@ Assistant is constantly learning and improving, and its capabilities are constan
 Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
 
 Use the following guidelines:
+* If you are answering the top-level question, only give the Final Answer.
 * Use the tree of questions and answers to help answer the question.
 * Explain your reasoning, and make specific reference to the retrieved data.
 * Provide the relevant retrieved data as part of your answer.
@@ -207,6 +208,7 @@ Bad: "technology company peer lookup"
 Good: "market peers"
 
 REMEMBER TO STICK TO THE OUTPUT SCHEMA!
+RETURN ONLY WHAT IS REQUIRED BY THE OUTPUT SCHEMA AND NOTHING ELSE.
 """
 
 NEW_SUBQUESTION_PROMPT = """\

@@ -11,6 +11,7 @@ from magentic import (
     UserMessage,
     AssistantMessage,
 )
+from openai import BadRequestError
 from magentic.chat_model.message import Message
 from pydantic import BaseModel, create_model, ValidationError
 
@@ -156,6 +157,10 @@ def _react_parse_action_and_inputs(result, tools) -> tuple[Callable, dict]:
 
     return tools[action]["callable"], input_object.model_dump()
 
+def _sanitize_llm_message(message: str) -> str:
+    message = message.replace("{", "{{")
+    message = message.replace("}", "}}")
+    return message
 
 def react_agent(query: str, functions=None):
     messages = [SystemMessage(ANSWER_SUBQUESTION_REACT_PROMPT), UserMessage("{query}")]
@@ -168,27 +173,39 @@ def react_agent(query: str, functions=None):
     def take_step(query: str, tools_and_descriptions) -> str:
         ...
 
-    chain = chatprompt(*messages, stop=stop, model=chat_model)(take_step)
-    result = chain(query, tools_and_descriptions=tools_and_descriptions)
     call_count = 1
 
     while call_count < max_call_count:
-        # Always append the agent's request to us
+        chain = chatprompt(*messages, stop=stop, model=chat_model)(take_step)
+
+        try:
+            result = chain(query, tools_and_descriptions=tools_and_descriptions)
+        except BadRequestError as err:  # In case we make a bad request (eg. too many tokens)
+            warnings.warn(f"Made a bad request: {err}. Trying again.")
+            messages.pop()  # Remove the last message (which would've caused the issue)
+            messages.append(  # Append the error
+                UserMessage(
+                    f"Observation: {err}"
+                )
+            )
+            continue  # Start the loop again.
+
+        # Always append the agent's request
         messages.append(
             # Sanitize to prevent template confusion
-            AssistantMessage(result.replace("{", "{{").replace("}", "}}"))
+            AssistantMessage(_sanitize_llm_message(result))
         )
         if "Final Answer:" in result:
             try:
                 return _react_parse_final_answer_response(result)
             except (
-                json.JSONDecodeError
+                (json.JSONDecodeError, ValidationError)
             ) as err:  # Give the agent a chance to fix it's bad output
                 breakpoint()
                 warnings.warn(f"Couldn't parse response: {err}. Trying again.")
                 messages.append(
                     UserMessage(
-                        f"Observation: Incorrectly formatted response -- {str(err)}"
+                        f"Observation: Incorrectly formatted response -- {_sanitize_llm_message(str(err))}"
                     )
                 )
         else:
@@ -198,17 +215,17 @@ def react_agent(query: str, functions=None):
                     print(f"Calling tool `{func.__name__}` with inputs `{kwargs}`")
                     function_call_result = func(**kwargs)
                     messages.append(
-                        UserMessage(
+                        UserMessage(  # Different sanitization to save tokens
                             f"Observation: {str(function_call_result).replace('{', '').replace('}', '')}"
                         )
                     )
-                    print("Thinking...")
+                    print("Generating...")
                 except Exception as err:  # TODO: Make this more specific
                     breakpoint()
                     warnings.warn(f"Couldn't execute action: {err}. Trying again.")
                     messages.append(
                         UserMessage(
-                            f"Observation: Couldn't execute action: {err}. Try again?"
+                            f"Observation: Couldn't execute action: {_sanitize_llm_message(str(err))}. Try again?"
                         )
                     )
             except (IndexError, KeyError, ValidationError) as err:
@@ -218,13 +235,10 @@ def react_agent(query: str, functions=None):
                 )
                 messages.append(
                     UserMessage(
-                        f"Observation: Couldn't parse action: {err}. Try again?"
+                        f"Observation: Couldn't parse action: {_sanitize_llm_message(str(err))}. Try again?"
                     )
                 )
 
-        # Send back to agent
-        chain = chatprompt(*messages, stop=stop, model=chat_model)(take_step)
-        result = chain(query, tools_and_descriptions=tools_and_descriptions)
         # Loop again...
         call_count += 1
 

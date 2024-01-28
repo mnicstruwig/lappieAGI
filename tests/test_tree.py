@@ -1,4 +1,4 @@
-from lappie.tree import find_subquestion
+from lappie.tree import find_subquestion, delete_subquestion_2
 
 
 def test_find_subquestion_second_level(mock_world):
@@ -46,3 +46,10 @@ def test_find_subquestion_doesnt_exist(mock_world_2):
     actual_result = find_subquestion(mock_world, question_id=target_question_id)
 
     assert actual_result == expected_result
+
+def test_delete_subquestion(mock_world):
+    target_question_id = mock_world.subquestions[0].id
+
+    breakpoint()
+    delete_subquestion_2(mock_world, target_question_id)
+    breakpoint()

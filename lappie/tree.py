@@ -103,6 +103,24 @@ def delete_subquestion(world: World, question_id: str) -> World:
     return world
 
 
+def delete_subquestion_2(
+    obj: Union[World, SubQuestion], question_id: str
+) -> Optional[Union[World, SubQuestion]]:
+    if str(obj.id) == str(question_id):
+        del obj
+        return
+
+    for subquestion in obj.subquestions:
+        if str(subquestion.id) == str(question_id):
+            del subquestion
+            return
+        elif subquestion.subquestions:
+            result = delete_subquestion_2(subquestion, question_id)
+            if result:
+                del result
+                return
+
+
 def add_subquestion(
     world: World, question_id: str, guidance: str | None = None
 ) -> World:

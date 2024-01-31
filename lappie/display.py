@@ -22,17 +22,17 @@ def build_question_panel(question, current_action: ActionResponse | None = None)
     subquestion_title_text = Text(f"{prefix} {question.question}")
     subquestion_title_text.append("\n")
 
-    if question.human_feedback:
-        subquestion_title_text.append(Text(f"🧑 {question.human_feedback}"))
+    if question.human_guidance:
+        subquestion_title_text.append(Text(f"🧑 {question.human_guidance}"))
 
     subquestion_title_text.append("\n")
     subquestion_title_text.append(
         Text(f"🤖 {str(question.answer)}", style="white" if question.answer else "dim")
     )
-    subquestion_title_text.append("\n")
-    subquestion_title_text.append("---", style="dim")
-    subquestion_title_text.append("\n")
-    subquestion_title_text.append(build_id(question.id))
+    # subquestion_title_text.append("\n")
+    # subquestion_title_text.append("---", style="dim")
+    # subquestion_title_text.append("\n")
+    # subquestion_title_text.append(build_id(question.id))
     border_style = "green" if question.answer else "white"
 
     if current_action:

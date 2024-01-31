@@ -138,7 +138,13 @@ def _react_parse_final_answer_response(result: str) -> AnswerResponse:
     cleaned_final_answer = re.sub(r",(\s+)", ",", cleaned_final_answer)
     cleaned_final_answer = cleaned_final_answer.replace("\n", "\\n")
 
-    return AnswerResponse(**json.loads(cleaned_final_answer))
+    data_dict = json.loads(cleaned_final_answer)
+
+    if "answer" in data_dict:
+        if data_dict["answer"] is None:
+            data_dict["answer"] = "Unable to answer."
+
+    return AnswerResponse(**data_dict)
 
 
 def _react_parse_action_response(result: str) -> (str, str):
@@ -168,7 +174,7 @@ def react_agent(query: str, functions=None):
     tools = _prepare_tools(functions)
     tools_and_descriptions = _render_tools_and_descriptions(tools)
     chat_model = OpenaiChatModel(model="gpt-4-1106-preview", temperature=0.1)
-    max_call_count = 10
+    max_call_count = 15
 
     def take_step(query: str, tools_and_descriptions) -> str:
         ...
@@ -185,7 +191,7 @@ def react_agent(query: str, functions=None):
             messages.pop()  # Remove the last message (which would've caused the issue)
             messages.append(  # Append the error
                 UserMessage(
-                    f"Observation: {err}"
+                    f"Observation: {_sanitize_llm_message(str(err))}"
                 )
             )
             continue  # Start the loop again.
@@ -201,7 +207,6 @@ def react_agent(query: str, functions=None):
             except (
                 (json.JSONDecodeError, ValidationError)
             ) as err:  # Give the agent a chance to fix it's bad output
-                breakpoint()
                 warnings.warn(f"Couldn't parse response: {err}. Trying again.")
                 messages.append(
                     UserMessage(

@@ -35,6 +35,7 @@ def main_loop(query: str):
         elif action.action == Action.FINAL_ANSWER:
             world: World = answer_question(world, action.target_question_id)
             render(world, action)
+            render(world, action)
             break
         elif action.action == Action.DELETE:
             world: World = delete_subquestion(world, action.target_question_id)
@@ -46,4 +47,4 @@ def main_loop(query: str):
         action = get_next_step(world)
 
 
-main_loop("Make the case for investing in AAPL.")
+main_loop("I want the annual revenue for a specific year for TSLA")

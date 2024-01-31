@@ -1,8 +1,7 @@
 from enum import Enum
 from typing import Callable, Optional, Any
-from uuid import uuid4
+from uuid import uuid4, UUID
 from pydantic import UUID4, BaseModel, Field
-
 
 class SubQuestion(BaseModel):
     id: UUID4 = Field(default_factory=uuid4)
@@ -10,7 +9,7 @@ class SubQuestion(BaseModel):
     answer: Optional[str] = Field(
         description="The answer to the question", default=None
     )
-    human_feedback: Optional[str] = Field(
+    human_guidance: Optional[str] = Field(
         description="Feedback provided by the human to assist with answering the question.",
         default=None,
     )
@@ -19,26 +18,26 @@ class SubQuestion(BaseModel):
         default=[],
     )
 
+    def delete_subquestion(self, target_id: str):
+        for subquestion in self.subquestions:
+            if str(subquestion.id) == str(target_id):
+                self.subquestions.remove(subquestion)
+                return True
+            if subquestion.delete_subquestion(target_id):
+                return True
+        return False
 
-class NewSubQuestion(BaseModel):
-    parent_id: str
-    subquestion: SubQuestion
 
-
-class World(BaseModel):
-    id: UUID4 = Field(default_factory=uuid4)
+class World(SubQuestion):
+    # id: UUID4 = Field(default_factory=uuid4)
     question: str = Field(description="The main question.")
     answer: Optional[str] = Field(
         description="The answer to the main question", default=None
     )
-    human_feedback: Optional[str] = Field(
-        description="Feedback provided by the human to assist with answering the question.",
-        default=None,
-    )
-    subquestions: list["SubQuestion"] = Field(
-        description="A list of subquestions that, when answered, will assist with answering the current question.",
-        default=[],
-    )
+
+class NewSubQuestion(BaseModel):
+    parent_id: str
+    subquestion: SubQuestion
 
 
 class Tool(BaseModel):

@@ -62,7 +62,7 @@ def answer_question(world: World, question_id: str) -> World:
     if target:
         # Fetch tools
         fetched_tools = []
-        if isinstance(target, (SubQuestion)):
+        if "SubQuestion" in str(target.__class__):  # TODO: Use inheritance sanely so I can use `isinstance`
             print("Fetching tools...")
             fetched_tools = llm.search_tools(
                 world_state=world.model_dump_json(),
@@ -78,7 +78,6 @@ def answer_question(world: World, question_id: str) -> World:
         query = ""
         query += f"Tree: {world.model_dump_json()}\n"
         query += f"Question ID: {question_id}\n"
-
         answer_response = react_agent(query=query, functions=fetched_tools)
         target.answer = answer_response.answer
     return world
@@ -90,16 +89,15 @@ def prompt_human(world: World, question_id: str, guidance: str | None) -> World:
         print(
             f"Agent is asking for human feedback on the following question: {question.question}"
         )
-        human_feedback = input(f"{guidance}\n")
-        question.human_feedback = human_feedback
+        human_feedback = input(f"{guidance}\n>>> ")
+        question.human_guidance = human_feedback
     return world
 
 
 def delete_subquestion(world: World, question_id: str) -> World:
     """Delete a subquestion from the world."""
     world = world.model_copy()
-    subquestion = find_subquestion(world, question_id)
-    del subquestion
+    world.delete_subquestion(question_id)
     return world
 
 
